@@ -206,11 +206,11 @@ async def go_to_address(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(OrderForm.address)
     await state.update_data(last_bot_msg_id=msg.message_id)
 
-@dp.callback_query(F.data == "back_to_grind")
-async def go_to_grind(callback: types.CallbackQuery, state: FSMContext):
-    msg = await bot.send_message(callback.from_user.id, "Нужен ли помол? Если да — под какой способ?", reply_markup=back_to("back_to_address"))
-    await state.set_state(OrderForm.grind)
-    await state.update_data(last_bot_msg_id=msg.message_id)
+#@dp.callback_query(F.data == "back_to_grind")
+#async def go_to_grind(callback: types.CallbackQuery, state: FSMContext):
+#    msg = await bot.send_message(callback.from_user.id, "Нужен ли помол? Если да — под какой способ?", reply_markup=back_to("back_to_address"))
+#    await state.set_state(OrderForm.grind)
+#    await state.update_data(last_bot_msg_id=msg.message_id)
 
 @dp.message(OrderForm.fio)
 async def order_fio(message: types.Message, state: FSMContext):
@@ -236,21 +236,21 @@ async def order_phone(message: types.Message, state: FSMContext):
     await state.set_state(OrderForm.address)
     await state.update_data(last_bot_msg_id=msg.message_id)
 
+#@dp.message(OrderForm.address)
+#async def order_address(message: types.Message, state: FSMContext):
+#    await state.update_data(address=message.text)
+#    msg = await bot.send_message(
+#        message.chat.id,
+#        "Нужен ли помол? Если да — под какой способ?",
+#        reply_markup=back_to("back_to_address")
+#    )
+#    await state.set_state(OrderForm.grind)
+#    await state.update_data(last_bot_msg_id=msg.message_id)
+
 @dp.message(OrderForm.address)
 async def order_address(message: types.Message, state: FSMContext):
     await state.update_data(address=message.text)
-    msg = await bot.send_message(
-        message.chat.id,
-        "Нужен ли помол? Если да — под какой способ?",
-        reply_markup=back_to("back_to_address")
-    )
-    await state.set_state(OrderForm.grind)
-    await state.update_data(last_bot_msg_id=msg.message_id)
-
-@dp.message(OrderForm.grind)
-async def order_grind(message: types.Message, state: FSMContext):
-    await state.update_data(grind=message.text)
-    data: dict[str, Any] = await state.get_data() or {}
+    data = await state.get_data() or {}
     addr = data.get('address', '').lower()
     city_bonus = ""
     if "екатеринбург" in addr:
@@ -259,7 +259,6 @@ async def order_grind(message: types.Message, state: FSMContext):
     weight = data.get('weight', '')
     pay_kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💳 Оплатить", url=paylink)],
-        [InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_grind")],
         [InlineKeyboardButton(text="МЕНЮ", callback_data="main_menu")]
     ])
     await bot.send_message(
@@ -273,6 +272,33 @@ async def order_grind(message: types.Message, state: FSMContext):
     )
     await bot.send_message(message.chat.id, "Прикрепите скрин оплаты (отправьте фото):")
     await state.set_state(OrderForm.payment_screenshot)
+
+#@dp.message(OrderForm.grind)
+#async def order_grind(message: types.Message, state: FSMContext):
+#    await state.update_data(grind=message.text)
+#    data: dict[str, Any] = await state.get_data() or {}
+#    addr = data.get('address', '').lower()
+#    city_bonus = ""
+#    if "екатеринбург" in addr:
+#        city_bonus = "\n\n🎉 Поздравляем! Заказ для Екатеринбурга — бесплатная доставка курьером за наш счёт!"
+#    paylink = data.get('paylink', '')
+#    weight = data.get('weight', '')
+#    pay_kb = InlineKeyboardMarkup(inline_keyboard=[
+#        [InlineKeyboardButton(text="💳 Оплатить", url=paylink)],
+#        [InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_grind")],
+#        [InlineKeyboardButton(text="МЕНЮ", callback_data="main_menu")]
+#    ])
+#    await bot.send_message(
+#        message.chat.id,
+ #       f"Отлично! Остался последний шаг — <b>оплата</b>.\n\n"
+ #       f"Вы выбрали: {weight}\n"
+ #       f"После оплаты прикрепите скриншот что все получилось!{city_bonus}",
+#        parse_mode="HTML",
+#        disable_web_page_preview=True,
+ #       reply_markup=pay_kb
+#    )
+#    await bot.send_message(message.chat.id, "Прикрепите скрин оплаты (отправьте фото):")
+#    await state.set_state(OrderForm.payment_screenshot)
 
 @dp.message(OrderForm.payment_screenshot, F.photo)
 async def order_payment_screenshot(message: types.Message, state: FSMContext):
